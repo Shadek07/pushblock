@@ -48,7 +48,10 @@ def sample(p):
 class Model:
   ''' simple one layer model for car racing '''
   def __init__(self, load_model=True):
-    self.env_name = "/Users/intuinno/codegit/PushBlock/app/mac/VisualPushBlockContinuous"
+    # For Mac
+    # self.env_name = "/Users/intuinno/codegit/pushBlock/app/mac/VisualPushBlockContinuous"
+    # For linux
+    self.env_name = "/home/intuinno/codegit/pushblock/app/linux/pushblock.x86_64"
     self.vae = ConvVAE(batch_size=1, gpu_mode=False, is_training=False, reuse=True)
 
     self.rnn = MDNRNN(hps_sample, gpu_mode=False, reuse=True)

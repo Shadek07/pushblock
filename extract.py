@@ -9,6 +9,8 @@ import gym
 
 from model import make_model
 
+from slack import postMessage
+
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -25,7 +27,7 @@ else:
   workerid = 1
 
 MAX_FRAMES = 50000 # max length of Visual Push Block
-MAX_TRIALS = 200 # just use this to extract one trial. 
+MAX_TRIALS = 4000 # just use this to extract one trial. 
 
 render_mode = False # for debugging.
 
@@ -69,6 +71,11 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
 
     total_frames += (frame+1)
     print("dead at", frame+1, "total recorded frames for this worker", total_frames)
+
+    msg = "total recorded frame for work " + str(workerid) + " is " + str(total_frames)
+
+    # postMessage(msg)
+
     recording_obs = np.array(recording_obs, dtype=np.uint8)
     recording_action = np.array(recording_action, dtype=np.float16)
     np.savez_compressed(filename, obs=recording_obs, action=recording_action)
@@ -78,3 +85,6 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
     model.make_env(render_mode=render_mode)
     continue
 model.env.close()
+
+msg = "Worker " + str(workerid) + " is done."
+# postMessage(msg)
