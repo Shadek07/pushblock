@@ -25,7 +25,7 @@ else:
   workerid = 1
 
 MAX_FRAMES = 50000 # max length of Visual Push Block
-MAX_TRIALS = 200 # just use this to extract one trial. 
+MAX_TRIALS = 2000 # just use this to extract one trial.
 
 render_mode = False # for debugging.
 
@@ -56,7 +56,9 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
       else:
         model.env.render("rgb_array")
 
-      recording_obs.append(obs)
+      obs = obs * 255.0
+
+      recording_obs.append(obs.astype(np.uint8))
 
       z, mu, logvar = model.encode_obs(obs)
       action = model.get_action(z)
@@ -69,6 +71,7 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
 
     total_frames += (frame+1)
     print("dead at", frame+1, "total recorded frames for this worker", total_frames)
+
     recording_obs = np.array(recording_obs, dtype=np.uint8)
     recording_action = np.array(recording_action, dtype=np.float16)
     np.savez_compressed(filename, obs=recording_obs, action=recording_action)
