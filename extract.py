@@ -58,7 +58,9 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
       else:
         model.env.render("rgb_array")
 
-      recording_obs.append(obs)
+      obs = obs * 255.0
+
+      recording_obs.append(obs.astype(np.uint8))
 
       z, mu, logvar = model.encode_obs(obs)
       action = model.get_action(z)
@@ -71,10 +73,6 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
 
     total_frames += (frame+1)
     print("dead at", frame+1, "total recorded frames for this worker", total_frames)
-
-    msg = "total recorded frame for work " + str(workerid) + " is " + str(total_frames)
-
-    # postMessage(msg)
 
     recording_obs = np.array(recording_obs, dtype=np.uint8)
     recording_action = np.array(recording_action, dtype=np.float16)
