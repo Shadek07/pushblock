@@ -1,4 +1,6 @@
 app/
+series/
+tf_vae/
 record/
 .idea/
 

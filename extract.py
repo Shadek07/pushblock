@@ -26,8 +26,8 @@ if args.workerid is not None:
 else:
   workerid = 1
 
-MAX_FRAMES = 50000 # max length of Visual Push Block
-MAX_TRIALS = 4000 # just use this to extract one trial. 
+MAX_FRAMES = 1000 # max length of Visual Push Block
+MAX_TRIALS = 1200 # just use this to extract one trial. 
 
 render_mode = False # for debugging.
 
@@ -84,5 +84,8 @@ for trial in range(MAX_TRIALS): # 200 trials per worker
     continue
 model.env.close()
 
-msg = "Worker " + str(workerid) + " is done."
+print( "Worker ", str(workerid),  " is done.")
+
+ 
 # postMessage(msg)
+

@@ -1,17 +1,18 @@
 '''
 Train VAE model on data created using extract.py
-final model saved into tf_vae/vae.json
+final model saved into vae/vae.json
 '''
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="0" # can just override for multi-gpu systems
+# os.environ["CUDA_VISIBLE_DEVICES"]="0" # can just override for multi-gpu systems
 
 import tensorflow as tf
 import random
 import numpy as np
+import datetime
 np.set_printoptions(precision=4, edgeitems=6, linewidth=100, suppress=True)
 
-from vae.vae import ConvVAE, reset_graph
+from vae.vae import reset_graph, ConvVAE
 
 # Hyperparameters for ConvVAE
 z_size=32
@@ -19,50 +20,67 @@ batch_size=100
 learning_rate=0.0001
 kl_tolerance=0.5
 
+
 # Parameters for training
 NUM_EPOCH = 10
 DATA_DIR = "record"
+NUM_FILES = 2000    
 
-model_save_path = "tf_vae"
+print("Start time:\t", datetime.datetime.now())
+
+model_save_path = "vae"
 if not os.path.exists(model_save_path):
   os.makedirs(model_save_path)
 
-def count_length_of_filelist(filelist):
-  # although this is inefficient, much faster than doing np.concatenate([giant list of blobs])..
-  N = len(filelist)
+def load_raw_data_list(filelist):
+  data_list = []
+  counter = 0
+  for i in range(len(filelist)):
+    filename = filelist[i]
+    raw_data = np.load(os.path.join(DATA_DIR, filename))['obs']
+    data_list.append(raw_data)
+    if ((i+1) % 100 == 0):
+      print("loading file", (i+1))
+  return data_list
+
+def count_length_of_raw_data(raw_data_list):
+  min_len = 100000
+  max_len = 0
+  N = len(raw_data_list)
   total_length = 0
   for i in range(N):
-    filename = filelist[i]
-    raw_data = np.load(os.path.join("record", filename))['obs']
-    l = len(raw_data)
+    l = len(raw_data_list[i])
+    if l > max_len:
+      max_len = l
+    if l < min_len:
+      min_len = l
+    if l < 10:
+      print(i)
     total_length += l
-    if (i % 1000 == 0):
-      print("loading file", i)
   return  total_length
 
-def create_dataset(filelist, N=10000, M=1000): # N is 10000 episodes, M is number of timesteps
-  data = np.zeros((M*N, 64, 64, 3), dtype=np.uint8)
+def create_dataset(raw_data_list):
+  N = len(raw_data_list)
+  M = count_length_of_raw_data(raw_data_list)
+  print("M: The length of raw data\t",M )
+  data = np.zeros((M, 64, 64, 3), dtype=np.uint8)
   idx = 0
   for i in range(N):
-    filename = filelist[i]
-    raw_data = np.load(os.path.join("record", filename))['obs']
+    raw_data = raw_data_list[i]
     l = len(raw_data)
-    if (idx+l) > (M*N):
+    if (idx+l) > M:
       data = data[0:idx]
-      print('premature break')
       break
     data[idx:idx+l] = raw_data
     idx += l
-    if ((i+1) % 100 == 0):
-      print("loading file", i+1)
   return data
 
 # load dataset from record/*. only use first 10K, sorted by filename.
 filelist = os.listdir(DATA_DIR)
 filelist.sort()
-filelist = filelist[0:10000]
-#print("check total number of images:", count_length_of_filelist(filelist))
-dataset = create_dataset(filelist)
+filelist = filelist[0:NUM_FILES]
+dataset = load_raw_data_list(filelist)
+dataset = create_dataset(dataset)
 
 # split into batches:
 total_length = len(dataset)
@@ -97,7 +115,8 @@ for epoch in range(NUM_EPOCH):
     if ((train_step+1) % 500 == 0):
       print("step", (train_step+1), train_loss, r_loss, kl_loss)
     if ((train_step+1) % 5000 == 0):
-      vae.save_json("tf_vae/vae.json")
+      vae.save_json("vae/vae.json")
 
 # finished, final model:
-vae.save_json("tf_vae/vae.json")
+vae.save_json("vae/vae.json")
+print("Finish time: \t", datetime.datetime.now())
